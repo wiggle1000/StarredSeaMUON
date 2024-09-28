@@ -1,2 +1,2 @@
 # StarredSeaMUON
-(Multi-User Overestimated Network)
+(Multi-User Overestimation Network)
