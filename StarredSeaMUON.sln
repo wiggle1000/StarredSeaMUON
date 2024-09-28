@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35312.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StarredSeaMUON", "StarredSeaMUON\StarredSeaMUON.csproj", "{391F8088-AB5F-43DF-B14B-2648EC3EB372}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StarredSeaAssetDownloadServer", "StarredSeaAssetDownloadServer\StarredSeaAssetDownloadServer.csproj", "{497AD197-EB40-4DF3-95A4-7C1DE2B8AEAC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{391F8088-AB5F-43DF-B14B-2648EC3EB372}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{391F8088-AB5F-43DF-B14B-2648EC3EB372}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{391F8088-AB5F-43DF-B14B-2648EC3EB372}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{391F8088-AB5F-43DF-B14B-2648EC3EB372}.Release|Any CPU.Build.0 = Release|Any CPU
+		{497AD197-EB40-4DF3-95A4-7C1DE2B8AEAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{497AD197-EB40-4DF3-95A4-7C1DE2B8AEAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{497AD197-EB40-4DF3-95A4-7C1DE2B8AEAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{497AD197-EB40-4DF3-95A4-7C1DE2B8AEAC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {01401DDA-F806-4BB3-99FB-4E86A88A4964}
+	EndGlobalSection
+EndGlobal
