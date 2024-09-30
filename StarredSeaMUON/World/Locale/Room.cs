@@ -1,4 +1,5 @@
 ﻿using StarredSeaMUON.Server;
+using StarredSeaMUON.Util;
 using StarredSeaMUON.World.Objects;
 using System;
 using System.Collections.Generic;
@@ -41,50 +42,43 @@ namespace StarredSeaMUON.World.Locale
         }
 
 
-        internal void DisplayToUser(ClientConnection client)
+        internal void DisplayToUser(RemotePlayer client)
         {
-            StreamWriter writer = client.writer;
-            TerminalTheme theme = client.cTheme;
-            MessageSender.SetTextStyle(client, theme.room_title);
-            MessageSender.SendCentered(client, title);
-            MessageSender.SetTextStyle(client, theme.normal);
-            MessageSender.SendText(writer, " ");
+            StreamWriter writer = client.telnet.writer;
+            TerminalTheme theme = client.options.terminalTheme;
+            client.OutputCentered(title, theme.room_title);
+            client.Output(" ", theme.normal);
             if (hasMeta("image"))
             {
                 string filename = getMetaString("image");
                 if (filename.ToLower().EndsWith("hurp"))
-                    MessageSender.SendAsciiArt(client, filename);
+                    AsciiArtHelper.SendAsciiArt(client, filename);
                 else
-                    MessageSender.SendAsciiArt(client, filename);
+                    AsciiArtHelper.SendAsciiArt(client, filename);
             }
-            MessageSender.SendText(writer, " ");
-            MessageSender.SetTextStyle(client, theme.room_desc);
-            MessageSender.SendCentered(client, description);
-            MessageSender.SetTextStyle(client, theme.normal);
-            MessageSender.SendText(writer, " ");
+            client.Output(" ", theme.normal);
+            client.Output(description, theme.room_desc);
+            client.Output(" ", theme.normal);
             if (exits.Count == 0)
             {
-                MessageSender.SetTextStyle(client, theme.normal);
-                MessageSender.SendCentered(client, "There are no obvious exits.");
+                client.Output("There are no obvious exits.", theme.room_exits);
             }
             else if (exits.Count == 1)
             {
-                MessageSender.SendCentered(client, "There is one obvious exit:");
+                client.OutputCentered("There is one obvious exit:", theme.room_exits);
                 foreach (KeyValuePair<string, Tuple<long, string>> a in exits)
                 {
-                    MessageSender.SendCentered(client, a.Key + " - " + a.Value.Item2);
+                    client.OutputCentered(a.Key + " - " + a.Value.Item2, theme.room_exits);
                 }
             }
             else
             {
-                MessageSender.SetTextStyle(client, theme.room_exits);
-                MessageSender.SendCentered(client, "There are " + exits.Count + " obvious exits:");
+                client.OutputCentered("There are " + exits.Count + " obvious exits:", theme.room_exits);
                 foreach(KeyValuePair<string, Tuple<long, string>> a in exits)
                 {
-                    MessageSender.SendCentered(client, a.Key + " - " + a.Value.Item2);
+                    client.OutputCentered(a.Key + " - " + a.Value.Item2, theme.room_exits);
                 }
             }
-            MessageSender.SetTextStyle(client, theme.normal);
         }
     }
 }

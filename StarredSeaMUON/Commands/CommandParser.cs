@@ -17,7 +17,7 @@ namespace StarredSeaMUON.Commands
             commands.Add(new CommandLook());
         }
 
-        private static (Command?, CommandParam[]?) findApplicableCommand(ClientConnection caller, string fullInput)
+        private static (Command?, CommandParam[]?) findApplicableCommand(RemotePlayer caller, string fullInput)
         {
             string lastError = "";
             foreach(Command c in commands)
@@ -48,28 +48,28 @@ namespace StarredSeaMUON.Commands
                     }
                 }
             }
-            MessageSender.SendError(caller, lastError, false, true);
+            caller.OutputError(lastError, false, true);
             return (null, null);
         }
 
-        public static void TryRunCommand(ClientConnection caller, string fullInput)
+        public static void TryRunCommand(RemotePlayer caller, string fullInput)
         {
             (Command? c, CommandParam[]? pars) = findApplicableCommand(caller, fullInput);
             if(c == null)
             {
-                MessageSender.SendError(caller, "Unknown Command.");
+                caller.OutputError("Unknown Command.");
                 return;
             }
-            MessageSender.SendText(caller.writer, "Detected Command: " + c.ToString());
-            MessageSender.SendText(caller.writer, "Args: ");
+            caller.Output("Detected Command: " + c.ToString());
+            caller.Output("Args: ");
             foreach(CommandParam par in pars)
             {
-                MessageSender.SendText(caller.writer, par.type.ToString() + " - " + par.value);
+                caller.Output(par.type.ToString() + " - " + par.value);
             }
             c.Call(caller, pars);
         }
 
-        private static (bool, string, CommandParam?) ParseNextParam(ClientConnection caller, string _paramString, CommandParamType toParse)
+        private static (bool, string, CommandParam?) ParseNextParam(RemotePlayer caller, string _paramString, CommandParamType toParse)
         {
             string paramString = _paramString.Trim();
             Logger.Log("Attempting parse of " + toParse.ToString() + " on '" + paramString + "'");

@@ -15,8 +15,10 @@ namespace StarredSeaMUON
         }
         public static void LogError(string s)
         {
+            ConsoleColor prevC = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("[ERR][" + DateTime.Now.ToLongTimeString() + "] " + s);
+            Console.ForegroundColor = prevC;
         }
     }
 }

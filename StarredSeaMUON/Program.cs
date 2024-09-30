@@ -1,4 +1,5 @@
 ﻿using StarredSeaMUON.Server;
+using StarredSeaMUON.Server.Telnet;
 using System;
 using System.Diagnostics;
 using System.Text;
@@ -8,32 +9,41 @@ namespace StarredSeaMUON
     internal class Program
     {
         private static Process? assetServer;
+        const int tickIntervalMS = 250;
+
+        public delegate void GlobalTickHandler(GlobalTickEventArgs e);
+        public static event GlobalTickHandler? GlobalTick;
 
         public static string MudDisplayName = "StarredSeaMUON";
+
+
         static void Main(string[] args)
         {
             Console.Title = MudDisplayName + " Server";
 
+            //set up encoding
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
 
-            Console.Write("Starting Asset Server...");
-            //Start Asset Server (disabled because it makes it hard to work on..)
-            /*if (File.Exists("AssetServer.exe"))
-            {
-                ProcessStartInfo psi = new ProcessStartInfo("AssetServer.exe");
-                psi.UseShellExecute = true;
-                psi.Verb = "runas";
-                assetServer = Process.Start(psi);
-                Console.WriteLine(" OK!");
-            } 
-            else
-            {
-                Console.WriteLine(" Asset Server not found! Proceeding without it.");
-            }*/
+            //start listening for clients
+            ConnectionListener cl = new ConnectionListener(System.Net.IPAddress.Any, 9876);
+            cl.Start();
 
-            //Start MUD Server
-            ConnectionManager.StartServer();
+            //run ticks on main thread
+            while (true)
+            {
+                Thread.Sleep(tickIntervalMS);
+                GlobalTick?.Invoke(new GlobalTickEventArgs(tickIntervalMS/1000f));
+            }
+        }
+    }
+    public class GlobalTickEventArgs : EventArgs
+    {
+        public float Delta;
+        public GlobalTickEventArgs(float delta)
+        {
+            this.Delta = delta;
         }
     }
 }

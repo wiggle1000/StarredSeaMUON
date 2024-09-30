@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 
 namespace StarredSeaMUON.Commands
 {
-    internal class CommandLook : Command
+    internal class LuaCommands : Command
     {
-        public CommandLook()
+        public LuaCommands()
         {
             commandParamLists.Add(new CommandParamType[] { });
             commandParamLists.Add(new CommandParamType[] { CommandParamType.TARGET });

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
+using StarredSeaMUON.Server;
 
 namespace StarredSeaMUON.Database
 {
@@ -42,15 +43,36 @@ namespace StarredSeaMUON.Database
             return ExecuteReader(new SqliteCommandBuilder(connection, "SELECT * from rooms WHERE id=@id")
                 .WithIntParam("id", roomID));
         }
+        public SqliteDataReader GetObjectReader(long objID)
+        {
+            return ExecuteReader(new SqliteCommandBuilder(connection, "SELECT * from objects WHERE id=@id")
+                .WithIntParam("id", objID));
+        }
         public long GetUserID(string userName)
         {
             SqliteDataReader r = ExecuteReader(new SqliteCommandBuilder(connection, "SELECT * from users WHERE name=@name")
                 .WithTextParam("name", userName));
-            if(r.Read())
+            if (r.Read())
             {
                 return (long)r.GetValue("id");
             }
             return -1;
+        }
+        public UserEntry? GetUserData(long userID)
+        {
+            SqliteDataReader r = ExecuteReader(new SqliteCommandBuilder(connection, "SELECT * from users WHERE id=@uid")
+                .WithIntParam("uid", userID));
+            if (r.Read())
+            {
+                UserEntry user = new UserEntry();
+                user.ID = (long)r.GetValue("id");
+                user.Name = (string)r.GetValue("name");
+                user.Email = (string)r.GetValue("email");
+                user.cRoomID = (int)r.GetValue("roomid");
+                user.ParsePerms((string)r.GetValue("perms"));
+                return user;
+            }
+            return null;
         }
         public bool CheckLogin(string userName, string pass)
         {

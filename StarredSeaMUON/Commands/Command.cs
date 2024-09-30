@@ -22,7 +22,7 @@ namespace StarredSeaMUON.Commands
         {
             return 0;
         }
-        public virtual void Call(ClientConnection caller, CommandParam[] parameters)
+        public virtual void Call(RemotePlayer caller, CommandParam[] parameters)
         {
 
         }

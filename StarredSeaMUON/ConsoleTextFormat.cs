@@ -18,6 +18,10 @@ namespace StarredSeaMUON
 
     internal class ConsoleTextFormat
     {
+        //these are FALLBACKS!! try not to use when player theme is an option
+        public static ConsoleTextFormat PLAIN = new ConsoleTextFormat(Color.White, Color.Black);
+        public static ConsoleTextFormat HIGHLIGHT = new ConsoleTextFormat(Color.LightYellow, Color.Black, true, true);
+
         public Color textColor = Color.White;
         public Color bgColor = Color.Black;
         public bool bold = false;
@@ -44,7 +48,7 @@ namespace StarredSeaMUON
         {
             if (colorSupport == TerminalColorSupport.BlackWhite)
             {
-                    int index = (c.R + c.G + c.B > 128*3) ? 30 : 97;
+                int index = (c.GetBrightness() > 0.5f) ? 30 : 97;
                 if (isBG) index += 10;
                 return index.ToString();
             }
@@ -55,6 +59,7 @@ namespace StarredSeaMUON
                 index += (c.G > 64) ? 2 : 0; // Green bit
                 index += (c.B > 64) ? 4 : 0; // Blue bit
                 if (isBG) index += 10;
+                //Console.WriteLine("COLOR MATCH: " + c.Name + (isBG ? "BG" : "FG") + " ---> \x1b[0;" + index + "m ░▒▓█\u001b[0m" + index+ "");
                 return index.ToString();
             }
             else if (colorSupport == TerminalColorSupport.Full)
@@ -96,5 +101,28 @@ namespace StarredSeaMUON
             formatStr += "m";
             return formatStr;
         }
+        public static string GetTelnetColorOnlyCodeFG(TerminalColorSupport colorSupport, Color fg)
+        {
+            string formatStr = "\x1b[";
+            formatStr += GetNearestColorCode(fg, false, colorSupport);
+            formatStr += "m";
+            return formatStr;
+        }
+        public static string GetTelnetColorOnlyCodeBG(TerminalColorSupport colorSupport, Color bg)
+        {
+            string formatStr = "\x1b[";
+            formatStr += GetNearestColorCode(bg, true, colorSupport);
+            formatStr += "m";
+            return formatStr;
+        }
+        public static string GetTelnetColorOnlyFormat(TerminalColorSupport colorSupport, Color color, bool isBG)
+        {
+            return isBG ? GetTelnetColorOnlyCodeBG(colorSupport, color) : GetTelnetColorOnlyCodeFG(colorSupport, color);
+        }
+        public static string GetResetCode(TerminalColorSupport colorSupport)
+        {
+            return "\x1b[0m";
+        }
+
     }
 }

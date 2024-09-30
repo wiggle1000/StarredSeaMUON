@@ -13,7 +13,10 @@ namespace StarredSeaMUON
         public static TerminalTheme currentTheme = new TerminalTheme();
 
         public ConsoleTextFormat normal = new ConsoleTextFormat(Color.WhiteSmoke, Color.Black);
+        public ConsoleTextFormat highlight = new ConsoleTextFormat(Color.LightGoldenrodYellow, Color.Black, true, true);
+        public ConsoleTextFormat transponder = new ConsoleTextFormat(Color.Black, Color.Cyan);
         public ConsoleTextFormat prompt = new ConsoleTextFormat(Color.Yellow, Color.Black, true);
+        public ConsoleTextFormat query = new ConsoleTextFormat(Color.Yellow, Color.Black, true);
         public ConsoleTextFormat error = new ConsoleTextFormat(Color.OrangeRed, Color.DarkMagenta, true, false, false, false, false, true);
         public ConsoleTextFormat item = new ConsoleTextFormat(Color.LightYellow, Color.DarkOrange, false, true);
         public ConsoleTextFormat player = new ConsoleTextFormat(Color.LightSkyBlue, Color.DarkSlateBlue, false, true);
@@ -22,7 +25,7 @@ namespace StarredSeaMUON
         public ConsoleTextFormat room_exits = new ConsoleTextFormat(Color.LemonChiffon, Color.Black, true, false, false, false, false, true);
         public ConsoleTextFormat enemy = new ConsoleTextFormat(Color.OrangeRed, Color.DarkRed);
 
-        public static TerminalTheme GetUserTheme(ClientConnection client)
+        public static TerminalTheme GetUserTheme(RemotePlayer client)
         {
             return currentTheme;
         }
