@@ -1,5 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
-using StarredSeaMUON.Database;
+﻿using StarredSeaMUON.Database;
+using StarredSeaMUON.Database.Objects;
 using StarredSeaMUON.Server;
 using StarredSeaMUON.World.Locale;
 using System;
@@ -30,13 +30,12 @@ namespace StarredSeaMUON.Commands
             return 0;
         }
 
-        public void LookRoom(RemotePlayer caller, long roomID)
+        public void LookRoom(RemotePlayer caller, DbRoom room)
         {
-            Room room = World.World.TryGetRoom(roomID);
-            room.DisplayToUser(caller);
-            if (room.hasMeta("music"))
+            RoomHelper.DisplayToUser(caller, room);
+            if (room.Metadata.HasMeta("music"))
             {
-                caller.PlaySound(room.getMetaString("music"));
+                caller.PlaySound(room.Metadata.GetMeta("music"));
             }
         }
         public override void Call(RemotePlayer caller, CommandParam[] parameters)
@@ -45,17 +44,15 @@ namespace StarredSeaMUON.Commands
             int paramCount = parameters.Count();
             if (paramCount == 0) //look at current room
             {
-                using (DBHelper db = new DBHelper())
-                {
-                    using (SqliteDataReader r = db.GetUserReader(caller.userInfo.ID))
-                    {
-                        if (r.Read())
-                        {
-                            long roomID = (long)r.GetValue("roomid");
-                            LookRoom(caller, roomID);
-                        }
-                    }
-                }
+                if (caller.userInfo == null) return;
+                if (caller.userInfo.CurrentCharacter == null ) return;
+                if (caller.userInfo.CurrentCharacter.ControllingMob == null) return;
+                if (caller.userInfo.CurrentCharacter.ControllingMob.CRoomID == null) return;
+
+                long roomID = caller.userInfo.CurrentCharacter.ControllingMob.CRoomID.Value;
+                DbRoom? room = caller.db.GetRoomByID(roomID);
+                if (room == null) return;
+                LookRoom(caller, room);
             }
             else //looking at a target
             {

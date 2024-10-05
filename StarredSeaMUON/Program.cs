@@ -1,4 +1,6 @@
-﻿using StarredSeaMUON.Server;
+﻿using Microsoft.EntityFrameworkCore;
+using StarredSeaMUON.Database;
+using StarredSeaMUON.Server;
 using StarredSeaMUON.Server.Telnet;
 using System;
 using System.Diagnostics;
@@ -16,6 +18,8 @@ namespace StarredSeaMUON
 
         public static string MudDisplayName = "StarredSeaMUON";
 
+        public static DbContextStarredSea db = new DbContextStarredSea();
+
 
         static void Main(string[] args)
         {
@@ -25,6 +29,13 @@ namespace StarredSeaMUON
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
+
+            if (db.Database.GetPendingMigrations().Count() > 0)
+            {
+                Console.WriteLine("Pending DB migrations found! Applying.");
+                db.Database.Migrate(); //migrates if needed
+                db.SaveChanges();
+            }
 
             //start listening for clients
             ConnectionListener cl = new ConnectionListener(System.Net.IPAddress.Any, 9876);

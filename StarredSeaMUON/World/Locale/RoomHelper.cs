@@ -6,35 +6,65 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data;
+using StarredSeaMUON.Server;
+using StarredSeaMUON.Database.Objects;
 
 namespace StarredSeaMUON.World.Locale
 {
     internal class RoomHelper
     {
-        public static Room loadRoomFromDB(long roomID)
+        public static void DisplayToUser(RemotePlayer client, DbRoom room)
         {
-            using (DBHelper db = new DBHelper())
+            StreamWriter writer = client.telnet.writer;
+            TerminalTheme theme = client.options.terminalTheme;
+            client.OutputCentered(room.Title, theme.room_title);
+            client.Output(" ", theme.normal);
+            if (room.Metadata.HasMeta("image"))
             {
-                Logger.Log("LOADING ROOM FROM DB: " + roomID);
-                using (SqliteDataReader dat = db.GetRoomReader(roomID))
+                string filename = room.Metadata.GetMeta("image");
+                if (filename.ToLower().EndsWith("hurp"))
+                    AsciiArtHelper.SendAsciiArt(client, filename);
+                else
+                    AsciiArtHelper.SendAsciiArt(client, filename);
+            }
+            client.Output(" ", theme.normal);
+            client.Output(room.Description, theme.room_desc);
+            client.Output(" ", theme.normal);
+            List<Exit> visExits = room.VisibleExits;
+            if (visExits.Count == 0)
+            {
+                client.Output("There are no obvious exits.", theme.room_exits);
+            }
+            else if (visExits.Count == 1)
+            {
+                client.OutputCentered("There is one obvious exit:", theme.room_exits);
+                foreach (Exit a in visExits)
                 {
-                    if (!dat.Read()) return null;
-                    Room r = new Room();
-                    r.name = (string)dat.GetValue("name");
-                    if (!dat.IsDBNull("title"))
-                        r.title = (string)dat.GetValue("title");
+                    if(a.Name.ToLower() == a.ExitString.ToLower())
+                    {
+                        client.OutputCentered(a.Name + " - " + a.Description, theme.room_exits);
+                    }
                     else
-                        r.title = (string)dat.GetValue("name");
-                    if (!dat.IsDBNull("description"))
-                        r.description = (string)dat.GetValue("description");
-                    if (!dat.IsDBNull("exits"))
-                        r.parseExits((string)dat.GetValue("exits"));
-                    if (!dat.IsDBNull("metadata"))
-                        r.ParseMeta((string)dat.GetValue("metadata"));
-                    return r;
+                    {
+                        client.OutputCentered(a.Name + " (" + a.ExitString + ") - " + a.Description, theme.room_exits);
+                    }
                 }
             }
-            return null;
+            else
+            {
+                client.OutputCentered("There are " + visExits.Count + " obvious exits:", theme.room_exits);
+                foreach (Exit a in visExits)
+                {
+                    if (a.Name.ToLower() == a.ExitString.ToLower())
+                    {
+                        client.OutputCentered(a.Name + " - " + a.Description, theme.room_exits);
+                    }
+                    else
+                    {
+                        client.OutputCentered(a.Name + " (" + a.ExitString + ") - " + a.Description, theme.room_exits);
+                    }
+                }
+            }
         }
     }
 }

@@ -25,6 +25,22 @@ namespace StarredSeaMUON.Database
             return Convert.ToBase64String(outputBytes);
         }
 
+        public static bool checkPassword(string pass, string passHash)
+        {
+            byte[] savedHashBytes = Convert.FromBase64String(passHash);
+            byte[] salt = new byte[32];
+            Array.Copy(savedHashBytes, salt, 32);
+            byte[] theseBytes = doHash(pass, salt);
+            for (int i = 0; i < theseBytes.Length; i++)
+            {
+                if (theseBytes[i] != savedHashBytes[i + 32])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         /// <summary>
         /// run the actual hashing algorithm, returning the 20 byte hash
         /// </summary>

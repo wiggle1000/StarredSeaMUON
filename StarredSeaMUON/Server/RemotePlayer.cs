@@ -1,10 +1,12 @@
 ﻿using StarredSeaMUON.Database;
+using StarredSeaMUON.Database.Objects;
 using StarredSeaMUON.Gamestate.Contexts;
 using StarredSeaMUON.Server.Telnet;
 using StarredSeaMUON.Util;
 using StarredSeaMUON.World.Objects;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -18,11 +20,11 @@ namespace StarredSeaMUON.Server
         public TelnetConnection telnet;
         public InputContextStack contextStack = new InputContextStack();
         public PlayerOptions options;
-        public UserEntry? userInfo;
+        public DbAccount? userInfo;
 
         public Animal? controlling;
 
-        public DBHelper db = new DBHelper();
+        public DbContextStarredSea db = new DbContextStarredSea();
 
         public RemotePlayer(TelnetConnection telnet)
         {
@@ -30,7 +32,6 @@ namespace StarredSeaMUON.Server
             this.options = new PlayerOptions(this);
             this.contextStack.SwitchBase(new IC_Login(this));
             Program.GlobalTick += this.contextStack.Tick;
-            userInfo = new UserEntry();
             PlaySound("stop");
         }
 
@@ -151,19 +152,35 @@ namespace StarredSeaMUON.Server
 
         public bool LogIn(string user, string pass)
         {
-            if (userInfo.isAuthenticated) return false;
-            if (!db.CheckForUser(user)) return false;
+            if (InputVerifiers.verifyName(user) != "") return false;
             if (InputVerifiers.verifyPassword(pass) != "") return false;
-            if (!db.CheckLogin(user, pass)) return false;
+            DbAccount? userAccount = db.GetAccount(user);
+            if (userAccount == null) return false;
 
-            long userID = db.GetUserID(user);
+            //check password
+            if (!PasswordHelper.checkPassword(pass, userAccount.PassHash)) return false;
 
-            if (userID == -1) return false;
+            if (userAccount.UserID == -1) return false;
 
-            userInfo = db.GetUserData(userID);
+            userInfo = userAccount;
             if (userInfo == null) return false;
-            userInfo.isAuthenticated = true;
+            return true;
+        }
 
+        public bool Register(string user, string email, string pass)
+        {
+            try
+            {
+                db.Database.BeginTransaction();
+                db.Accounts.Add(new DbAccount() { Email = email, Username = user, PassHash = PasswordHelper.hashPassword(pass) });
+                db.Database.CommitTransaction();
+                db.SaveChanges();
+            }
+            catch(Exception e)
+            {
+                Logger.LogError("Registration error: " + e.Message);
+                return false;
+            }
             return true;
         }
 
