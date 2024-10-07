@@ -34,7 +34,7 @@ namespace StarredSeaMUON.Gamestate.Contexts
                 AsciiArtHelper.SendAsciiArt(player, "title.utf8");
             else
                 AsciiArtHelper.SendAsciiArt(player, "title.ascii");
-            player.SetMusic("music/LobbyMusic1.mp3");
+            player.SetMusic("music/LobbyMusic3.mp3");
             player.PlaySound("sound/system/Startup.mp3");
             player.OutputTransponder("Greetings, traveller! I am Teline, TELCO's premium onboarding AI. Please enter your User Identification to continue the onboarding process.");
             //player.Output("Please enter your User Identification to continue the onboarding process:", player.options.terminalTheme.query);

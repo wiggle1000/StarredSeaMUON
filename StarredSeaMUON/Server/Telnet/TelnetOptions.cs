@@ -16,6 +16,7 @@ namespace StarredSeaMUON.Server.Telnet
         OPT_Extended_ASCII = 17,        //
         OPT_Terminal_Type = 24,         //
         OPT_NAWS = 31,                  // Window Size
+        OPT_CHARSET = 42,               // Charset
         OPT_GMCP = 201,                 //
         OPT_MSP = 90,                   //
     }

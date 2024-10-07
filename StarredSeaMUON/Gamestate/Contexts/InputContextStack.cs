@@ -54,7 +54,8 @@ namespace StarredSeaMUON.Gamestate.Contexts
 
         internal void Tick(GlobalTickEventArgs e)
         {
-            GetCurrent().Tick(e.Delta);
+
+            GetCurrent()?.Tick(e.Delta);
         }
     }
 }

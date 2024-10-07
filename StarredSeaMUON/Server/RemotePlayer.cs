@@ -30,9 +30,13 @@ namespace StarredSeaMUON.Server
         {
             this.telnet = telnet;
             this.options = new PlayerOptions(this);
-            this.contextStack.SwitchBase(new IC_Login(this));
             Program.GlobalTick += this.contextStack.Tick;
             PlaySound("stop");
+        }
+
+        public void NegotiationFinished()
+        {
+            this.contextStack.SwitchBase(new IC_Login(this));
         }
 
         ~RemotePlayer()

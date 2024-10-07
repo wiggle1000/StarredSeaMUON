@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,12 +26,18 @@ namespace StarredSeaMUON.Server.Telnet
 
         public RemotePlayer player;
 
-        public TelOption[] serverSupportedOptions = { TelOption.OPT_GMCP, TelOption.OPT_MSP, TelOption.OPT_NAWS};
+        public bool isClientDoneNegotiating = false; //to let server wait for charset negotiation if supported
+
+        public TelOption[] serverSupportedOptions = { TelOption.OPT_GMCP, TelOption.OPT_MSP, TelOption.OPT_NAWS, TelOption.OPT_CHARSET };
+        public List<TelOption> optionsDoneNegotiating = new List<TelOption>(); //add options to this list when their initial negotiations are completely done
+
+
+        public string commandBuffer = ""; //current input line
 
         public TelnetConnection(Socket client)
         {
             //clientEncoding = System.Text.Encoding.GetEncoding(437);
-            clientEncoding = System.Text.Encoding.UTF8;
+            //clientEncoding = System.Text.Encoding.UTF8;
             socket = client;
             stream = new NetworkStream(socket);
             reader = new StreamReader(stream, System.Text.Encoding.Latin1);
@@ -94,6 +101,60 @@ namespace StarredSeaMUON.Server.Telnet
                 case TelOption.OPT_GMCP:
                     gmcpData.ReadRawGMCPPacket(this);
                     break;
+                case TelOption.OPT_CHARSET:
+                    int nextByte = reader.Read();
+                    switch(nextByte)
+                    {
+                        case 02: //accepted
+                            string acceptedCharset = "";
+                            for(int i = 0; i < 256; i++)
+                            {
+                                nextByte = reader.Peek();
+                                if (nextByte == (byte)TelCtrl.IAC || nextByte == -1)
+                                    break;
+                                reader.Read();
+                                acceptedCharset += (char)nextByte;
+                            }
+                            if (reader.Read() != (int)TelCtrl.IAC) throw new MalformedSubnegotiationException("During CHARSET ACCEPT; missing tailing IAC");
+                            if (reader.Read() != (int)TelCtrl.SE) throw new MalformedSubnegotiationException("During CHARSET ACCEPT; SE not where expected");
+                            try { clientEncoding = Encoding.GetEncoding(acceptedCharset); Logger.Log("Applied encoding: \"" + acceptedCharset + "\""); }
+                            catch (ArgumentException e) { clientEncoding = Encoding.ASCII; Logger.LogError("Failed to apply encoding \"" + acceptedCharset + "\"! Falling back to ASCII"); }
+                            optionsDoneNegotiating.Add(TelOption.OPT_CHARSET);
+                            break;
+                        case 03: //rejected
+                            if (reader.Read() != (int)TelCtrl.IAC) throw new MalformedSubnegotiationException("During CHARSET DECLINE; missing tailing IAC");
+                            if (reader.Read() != (int)TelCtrl.SE) throw new MalformedSubnegotiationException("During CHARSET DECLINE; SE not where expected");
+                            clientEncoding = Encoding.ASCII;
+                            optionsDoneNegotiating.Add(TelOption.OPT_CHARSET);
+                            break;
+                    }
+                    Console.WriteLine("Got Charset Response");
+                    break;
+            }
+        }
+
+        public void OnClientAgree(TelOption opt)
+        {
+            Logger.Log("AAA!!! " + opt.ToString());
+            switch (opt)
+            {
+                case TelOption.OPT_CHARSET:
+                    Console.WriteLine("Sending list of charsets");
+                    SendRequestedCharsets();
+                    break;
+                default:
+                    optionsDoneNegotiating.Add(opt);
+                    break;
+            }
+        }
+        public void OnClientDisagree(TelOption opt)
+        {
+            Logger.Log("BBB!!! " + opt.ToString());
+            switch (opt)
+            {
+                default:
+                    optionsDoneNegotiating.Add(opt);
+                    break;
             }
         }
 
@@ -108,6 +169,7 @@ namespace StarredSeaMUON.Server.Telnet
             {
                 TelOption opt = (TelOption)reader.Read();
                 telOpts.SetOptionClient(opt, true);
+                OnClientAgree(opt);
 
                 Console.WriteLine("Got DO " + opt.ToString());
                 if (!telOpts.HasServerSent(opt))
@@ -123,8 +185,11 @@ namespace StarredSeaMUON.Server.Telnet
                 TelOption opt = (TelOption)reader.Read();
                 Console.WriteLine("Got DON'T " + opt.ToString());
                 telOpts.SetOptionClient(opt, false);
+                OnClientDisagree(opt);
                 if (!telOpts.HasServerSent(opt))
+                {
                     SendWont(opt);
+                }
             }
             else if (nextByte == (int)TelCtrl.WILL) //will
             {
@@ -132,10 +197,13 @@ namespace StarredSeaMUON.Server.Telnet
                 telOpts.SetOptionClient(opt, true);
 
                 Console.WriteLine("Got WILL " + opt.ToString());
+                OnClientAgree(opt);
                 if (!telOpts.HasServerSent(opt))
                 {
                     if (serverSupportedOptions.Contains(opt))
+                    {
                         SendDo(opt);
+                    }
                     else
                         SendDont(opt);
                 }
@@ -145,8 +213,11 @@ namespace StarredSeaMUON.Server.Telnet
                 TelOption opt = (TelOption)reader.Read();
                 Console.WriteLine("Got WON'T " + opt.ToString());
                 telOpts.SetOptionClient(opt, false);
+                OnClientDisagree(opt);
                 if (!telOpts.HasServerSent(opt))
+                {
                     SendDont(opt);
+                }
             }
             else if (nextByte == (int)TelCtrl.SB) //subnegotiation
             {
@@ -154,6 +225,18 @@ namespace StarredSeaMUON.Server.Telnet
                 int subType = reader.Read(); //get option that called the subnegotiation
                 DoTelnetSubnegotiation((TelOption)subType);
             }
+        }
+        public void SendRequestedCharsets()
+        {
+            writer.Flush();
+            stream.WriteByte((byte)TelCtrl.IAC);
+            stream.WriteByte((byte)TelCtrl.SB);
+            stream.WriteByte((byte)TelOption.OPT_CHARSET);
+            stream.WriteByte((byte)01); //REQUEST
+            stream.WriteByte(Encoding.ASCII.GetBytes(" ")[0]);
+            stream.Write(Encoding.ASCII.GetBytes("UTF-8 IBM437 US-ASCII"));
+            stream.WriteByte((byte)TelCtrl.IAC);
+            stream.WriteByte((byte)TelCtrl.SE);
         }
 
         public void SendWill(TelOption option)
@@ -197,52 +280,92 @@ namespace StarredSeaMUON.Server.Telnet
             }
         }
 
+        private bool ProcessClientInput()
+        {
+            int read = reader.Read();
+            if (read == -1) return false; // end of stream, exit thread
+
+            //Console.WriteLine(read);
+            if (read == (int)TelCtrl.IAC)
+            {
+                try
+                {
+                    //Console.WriteLine("Getting telnet command!");
+                    ParseTelnetCommand();
+                }
+                catch (Exception e)
+                {
+                    if (e is MalformedSubnegotiationException)
+                    {
+                        Logger.LogError("Got malformed subnegotiation!");
+                        Logger.LogError(e.Message);
+                        return true;
+                    }
+                    throw;
+                }
+            }
+            else if (read == '\r') //ignore CR
+            {
+            }
+            else if (read == '\n') //newline submits command
+            {
+                player.Input(commandBuffer);
+                commandBuffer = "";
+            }
+            else //normal input
+            {
+                commandBuffer += (char)read;
+            }
+            return true;
+        }
+
         private void connThread()
         {
             //SendUTF8("Hello from UTF8!. ⌂ ↔ ░▒▓█\r\n");
-
+            player = new RemotePlayer(this);
             try
             {
-                SendEncoded("Hello from " + clientEncoding.EncodingName + "! ⌂ ↔ ░▒▓█\r\n");
                 SendServerOptions();
-                player = new RemotePlayer(this);
-                string commandBuffer = ""; //current input line
+                for(int i = 0; isClientDoneNegotiating == false; i++)
+                {
+                    if (ProcessClientInput() == false) return;
+                    Thread.Sleep(100);
+                    isClientDoneNegotiating = true;
+                    foreach (TelOption opt in serverSupportedOptions)
+                    {
+                        if (!optionsDoneNegotiating.Contains(opt))
+                        {
+                            isClientDoneNegotiating = false;
+                            break;
+                        }
+                    }
+                    if (i > 20) //2 seconds
+                    {
+                        SendEncoded("CLIENT DIDN'T FINISH NEGOTIATING IN TIME! DISCONNECTING.\n");
+                        foreach (TelOption opt in serverSupportedOptions)
+                        {
+                            if (!optionsDoneNegotiating.Contains(opt))
+                            {
+                                SendEncoded(opt.ToString() + " NOT NEGOTIATED!\n");
+                            }
+                            else
+                            {
+                                SendEncoded(opt.ToString() + " Was negotiated.\n");
+                            }
+                        }
+                        writer.Flush();
+                        Thread.Sleep(100);
+                        writer.Dispose();
+                        reader.Dispose();
+                        socket.Close();
+                        return; //kill connection.
+                    }    
+                }
+                SendEncoded("Hello from " + clientEncoding.EncodingName + "! ⌂ ↔ ░▒▓█\r\n");
+                player.NegotiationFinished();
                 while (true)
                 {
-                    int read = reader.Read();
-                    if (read == -1) break; // end of stream, exit thread
-
-                    //Console.WriteLine(read);
-                    if (read == (int)TelCtrl.IAC)
-                    {
-                        try
-                        {
-                            //Console.WriteLine("Getting telnet command!");
-                            ParseTelnetCommand();
-                        }
-                        catch (Exception e)
-                        {
-                            if (e is MalformedSubnegotiationException)
-                            {
-                                Logger.LogError("Got malformed subnegotiation!");
-                                Logger.LogError(e.Message);
-                                continue;
-                            }
-                            throw;
-                        }
-                    }
-                    else if (read == '\r') //ignore CR
-                    {
-                    }
-                    else if (read == '\n') //newline submits command
-                    {
-                        player.Input(commandBuffer);
-                        commandBuffer = "";
-                    }
-                    else //normal input
-                    {
-                        commandBuffer += (char)read;
-                    }
+                    if (ProcessClientInput() == false) break;
                 }
             }
             catch(Exception e)
