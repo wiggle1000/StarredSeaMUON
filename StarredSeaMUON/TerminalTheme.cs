@@ -25,6 +25,12 @@ namespace StarredSeaMUON
         public ConsoleTextFormat room_exits = new ConsoleTextFormat(Color.LemonChiffon, Color.Black, true, false, false, false, false, true);
         public ConsoleTextFormat enemy = new ConsoleTextFormat(Color.OrangeRed, Color.DarkRed);
 
+        public ConsoleTextFormat table_heading = new ConsoleTextFormat(Color.Cyan, Color.DarkBlue);
+        public ConsoleTextFormat table_border = new ConsoleTextFormat (Color.DarkBlue, Color.Black);
+        public ConsoleTextFormat table_rowline = new ConsoleTextFormat(Color.DarkCyan, Color.Black);
+        public ConsoleTextFormat table_key = new ConsoleTextFormat    (Color.Yellow, Color.Black);
+        public ConsoleTextFormat table_value = new ConsoleTextFormat  (Color.Orange, Color.Black);
+
         public static TerminalTheme GetUserTheme(RemotePlayer client)
         {
             return currentTheme;

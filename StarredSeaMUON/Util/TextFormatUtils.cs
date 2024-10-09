@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace StarredSeaMUON.Util
@@ -181,6 +183,14 @@ namespace StarredSeaMUON.Util
         public static string ApplyColorTags(string input, RemotePlayer player)
         {
             return ApplyColorTags(input, player.options.colorSupport, player.options.terminalTheme.normal, player.options.terminalTheme.highlight);
+        }
+        public static string StripANSI(string input)
+        {
+            return Regex.Replace(input, @"[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]", "");
+        }
+        public static int StrLenIgnoreANSI(string input)
+        {
+            return StripANSI(input).Length;
         }
 
         public static string CenteredText(string input, RemotePlayer player, ConsoleTextFormat format, bool formatEntireLine = true)

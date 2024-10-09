@@ -75,7 +75,7 @@ namespace StarredSeaMUON.Gamestate.Contexts
                             player.OutputTransponder(TextFormatUtils.ApplyVarNames("Thank you for taking part in this onboarding experience, %c! We hope you enjoy your stay.", player));
 
                             //switch to new playing context!
-                            player.contextStack.SwitchBase(new IC_Playing(player));
+                            player.contextStack.SwitchBase(new IC_ChooseCharacter(player));
                         }
                         else if (loginStage == 10) //start registration
                         {
@@ -109,7 +109,7 @@ namespace StarredSeaMUON.Gamestate.Contexts
                             player.OutputTransponder(TextFormatUtils.ApplyVarNames("Thank you for partaking in this guided account creation process.\nRedirecting to character creation...", player));
 
                             //switch to new playing context!
-                            player.contextStack.SwitchBase(new IC_Playing(player));
+                            player.contextStack.SwitchBase(new IC_ChooseCharacter(player));
                         }
                     }
                     else
