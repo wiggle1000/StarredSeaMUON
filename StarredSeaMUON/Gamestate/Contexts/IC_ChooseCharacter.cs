@@ -10,6 +10,8 @@ namespace StarredSeaMUON.Gamestate.Contexts
 {
     class IC_ChooseCharacter : InputContext
     {
+        UserPrompt characterSelectionPrompt;
+
         public IC_ChooseCharacter(RemotePlayer player) : base(player)
         {
         }
@@ -17,13 +19,27 @@ namespace StarredSeaMUON.Gamestate.Contexts
         public override void OnActivate()
         {
             base.OnActivate();
-            UserPrompt characterSelectionPrompt = new UserPrompt("Select a character, or enter ^red;NEW^r; to create a new one.",
+            characterSelectionPrompt = new UserPrompt(
+                "Select a character, or enter ^red;NEW^r; to create a new one.",
                 "test",
                 "aaaaaaaaaaaa",
                 "dwa huidw  huig",
                 "among us",
-                "weeeee!!!!!").WithElement("NEW", "(Create a new character)");
+                "weeeee!!!!!"
+                ).WithElement("NEW", "(Create a new character)");
             characterSelectionPrompt.DisplayTo(player);
+        }
+        public override void ProcessPlayerInput(string line)
+        {
+            if(characterSelectionPrompt.options.ContainsKey(line))
+            {
+                player.Output("Ok option");
+            }
+            else
+            {
+                player.OutputError("Invalid entry: \"" + line + "\". Please try again.");
+                characterSelectionPrompt.DisplayTo(player);
+            }
         }
     }
 }
